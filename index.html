@@ -1,14 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Greedy Best First Search Demo</title>
+    <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <main>
-        <h1 class="font-bold text-4xl">Greedy Best First Search Demo</h1>
+
+<body class="bg-gray-100 py-5 px-12 min-h-screen">
+    <nav class="fixed top-0 py-5 px-2">
+        <h1 class="font-bold text-2xl">Greedy Best First Search Demo</h1>
+    </nav>
+
+    <main class="mt-14 relative">
+
+        <div id="node-tree-content">
+            <div x-data="{
+                hover: false,
+                timeoutId: null,
+                leftChild: false,
+                rightChild: false
+                }" @mouseenter="hover = true; clearTimeout(timeoutId)"
+                @mouseleave="timeoutId = setTimeout(() => hover = false, 1000)"
+                class="relative w-56 left-1/2 -translate-x-1/2">
+                <div
+                    class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
+                    A
+                </div>
+
+                <div x-show="hover || leftChild" x-transition x-data="{ haveChild: false }"
+                    @click="$el.appendChild($refs.nodeTemplate.content.cloneNode(true)); haveChild = true; leftChild = true;"
+                    class="absolute left-0 top-32">
+                    <div
+                        class="cursor-pointer relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
+                        Kiri ?
+                    </div>
+
+                </div>
+
+                <div x-show="hover || rightChild" x-transition x-data="{ haveChild: false }"
+                    @click="console.log('Hao'); muncul = true; items.push($refs.nodeTemplate.cloneNode(true)); haveChild = true; rightChild = true;"
+                    class="absolute right-0 top-32">
+                    <div
+                        class="cursor-pointer relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
+                        Kanan ?
+                    </div>
+                </div>
+
+
+                <template x-ref="nodeTemplate">
+                    <div x-data="{
+                        hover: false,
+                        timeoutId: null,
+                        leftChild: false,
+                        rightChild: false
+                        }" @mouseenter="hover = true; clearTimeout(timeoutId)"
+                        @mouseleave="timeoutId = setTimeout(() => hover = false, 1000)"
+                        class="relative w-56 left-1/2 -translate-x-1/2">
+                        <div
+                            class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
+                            A
+                        </div>
+
+                        <div x-show="hover || leftChild" x-transition x-data="{ haveChild: false }"
+                            @click="$el.appendChild($refs.nodeTemplate.content.cloneNode(true)); haveChild = true; leftChild = true;"
+                            class="absolute left-0 top-32">
+                            <div
+                                class="cursor-pointer relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
+                                Kiri ?
+                            </div>
+
+                        </div>
+
+                        <div x-show="hover || rightChild" x-transition x-data="{ haveChild: false }"
+                            @click="console.log('Hao'); muncul = true; items.push($refs.nodeTemplate.cloneNode(true)); haveChild = true; rightChild = true;"
+                            class="absolute right-0 top-32">
+                            <div
+                                class="cursor-pointer relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
+                                Kanan ?
+                            </div>
+                        </div>
+
+
+                        <template x-ref="nodeTemplate">
+                            <div>Innner template</div>
+                        </template>
+                </template>
+            </div>
+        </div>
     </main>
 </body>
+
 </html>
