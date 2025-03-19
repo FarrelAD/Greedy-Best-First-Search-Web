@@ -1,0 +1,1 @@
+![Web preview](docs/img/web-preview.png)
