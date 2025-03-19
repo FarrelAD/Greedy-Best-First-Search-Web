@@ -16,81 +16,43 @@
     </nav>
 
     <main class="mt-14 relative">
-
-        <div id="node-tree-content">
-            <div x-data="{
-                hover: false,
-                timeoutId: null,
-                leftChild: false,
-                rightChild: false
-                }" @mouseenter="hover = true; clearTimeout(timeoutId)"
-                @mouseleave="timeoutId = setTimeout(() => hover = false, 1000)"
-                class="relative w-56 left-1/2 -translate-x-1/2">
-                <div
-                    class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
-                    A
-                </div>
-
-                <div x-show="hover || leftChild" x-transition x-data="{ haveChild: false }"
-                    @click="$el.appendChild($refs.nodeTemplate.content.cloneNode(true)); haveChild = true; leftChild = true;"
-                    class="absolute left-0 top-32">
-                    <div
-                        class="cursor-pointer relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
-                        Kiri ?
-                    </div>
-
-                </div>
-
-                <div x-show="hover || rightChild" x-transition x-data="{ haveChild: false }"
-                    @click="console.log('Hao'); muncul = true; items.push($refs.nodeTemplate.cloneNode(true)); haveChild = true; rightChild = true;"
-                    class="absolute right-0 top-32">
-                    <div
-                        class="cursor-pointer relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
-                        Kanan ?
-                    </div>
-                </div>
-
-
-                <template x-ref="nodeTemplate">
-                    <div x-data="{
-                        hover: false,
-                        timeoutId: null,
-                        leftChild: false,
-                        rightChild: false
-                        }" @mouseenter="hover = true; clearTimeout(timeoutId)"
-                        @mouseleave="timeoutId = setTimeout(() => hover = false, 1000)"
-                        class="relative w-56 left-1/2 -translate-x-1/2">
-                        <div
-                            class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
-                            A
-                        </div>
-
-                        <div x-show="hover || leftChild" x-transition x-data="{ haveChild: false }"
-                            @click="$el.appendChild($refs.nodeTemplate.content.cloneNode(true)); haveChild = true; leftChild = true;"
-                            class="absolute left-0 top-32">
-                            <div
-                                class="cursor-pointer relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
-                                Kiri ?
-                            </div>
-
-                        </div>
-
-                        <div x-show="hover || rightChild" x-transition x-data="{ haveChild: false }"
-                            @click="console.log('Hao'); muncul = true; items.push($refs.nodeTemplate.cloneNode(true)); haveChild = true; rightChild = true;"
-                            class="absolute right-0 top-32">
-                            <div
-                                class="cursor-pointer relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black] left-1/2 -translate-x-1/2">
-                                Kanan ?
-                            </div>
-                        </div>
-
-
-                        <template x-ref="nodeTemplate">
-                            <div>Innner template</div>
-                        </template>
-                </template>
+        <div id="node-tree-content" class="flex flex-col items-center justify-center">
+            <div
+                x-data=""
+                @click="console.log('Node '+$el.textContent.trim()+' clicked!')"
+                class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black]">
+                A
+            </div>
+        
+            <div class="flex items-center justify-center my-5 relative">
+                <input 
+                    type="number" 
+                    name="1" 
+                    min="0"
+                    value="0"
+                    class="w-6 h-6 appearance-none bg-transparent text-center absolute top-1/2 -translate-y-1/2 -left-5 focus:outline-none"
+                    style="-moz-appearance: textfield; appearance: textfield;">
+                
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke-width="2.5"
+                    stroke="currentColor"
+                    class="size-6 scale-y-150">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
+                </svg>
+            </div>
+        
+            <div
+                x-data=""
+                @click="console.log('Node '+$el.textContent.trim()+' clicked!')"
+                class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black]">
+                B
             </div>
         </div>
+        
+    
     </main>
 </body>
 
