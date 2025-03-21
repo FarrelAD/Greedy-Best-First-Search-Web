@@ -24,43 +24,89 @@
             </button>
         </section>
         
-        <div id="node-tree-content" class="flex flex-col items-center justify-center">
+        <div 
+            x-data="{
+                leftChild: false,
+                rightChild: false,
+                lastRow: 1,
+                createNewNode(currentRow, side) {
+                    const totalRow = document.querySelectorAll('.row').length;
+
+                    if (totalRow != currentRow) return;
+
+                    const newRow = document.createElement('div');
+                    newRow.setAttribute('x-data', `{ currentRow: ${currentRow + 1} }`);
+                    newRow.setAttribute('class', 'row my-5 mt-24');
+
+                    const template = document.getElementById('node-template');
+                    const clonedTemplate = template.content.cloneNode(true);
+                    newRow.appendChild(clonedTemplate);
+                    
+                    $el.appendChild(newRow);
+                }
+            }"
+            id="node-tree-content" 
+            class="flex flex-col items-center justify-center">
             <div
-                x-data=""
-                @click="console.log('Node '+$el.textContent.trim()+' clicked!')"
-                class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black]">
-                A
-            </div>
-        
-            <div class="flex items-center justify-center my-5 relative">
-                <input 
-                    type="number" 
-                    name="1" 
-                    min="0"
-                    value="0"
-                    class="w-6 h-6 appearance-none bg-transparent text-center absolute top-1/2 -translate-y-1/2 -left-5 focus:outline-none"
-                    style="-moz-appearance: textfield; appearance: textfield;">
-                
-                <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke-width="2.5"
-                    stroke="currentColor"
-                    class="size-6 scale-y-150">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
-                </svg>
-            </div>
-        
-            <div
-                x-data=""
-                @click="console.log('Node '+$el.textContent.trim()+' clicked!')"
-                class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center shadow-[2px_5px_0px_black]">
-                B
-            </div>
-        </div>
-        
+                x-data="{
+                    currentRow: 1
+                }"
+                class="row my-5">
+                <div
+                    x-data="{
+                        isHover: false,
+                        timeoutId: null
+                    }"
+                    @click="console.log('Node a clicked!')"
+                    @mouseenter="isHover = true; clearTimeout(timeoutId)"
+                    @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
+                    class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
+                    A
     
+                    <div
+                        x-show="isHover"
+                        x-transition
+                        @click="createNewNode(currentRow, 'left')"
+                        class="absolute -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                        Left
+                    </div>
+
+                    <div
+                        x-show="isHover"
+                        x-transition
+                        @click="createNewNode(currentRow, 'right')"
+                        class="absolute -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                        Right
+                    </div>
+                </div>
+            </div>
+
+            
+            <template id="node-template">
+                <div
+                    x-data="{ isHover: false, timeoutId: null }"
+                    @click="console.log('Node a clicked!')"
+                    @mouseenter="isHover = true; clearTimeout(timeoutId)"
+                    @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
+                    class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
+                    A
+                    <div
+                        x-show="isHover"
+                        x-transition
+                        @click="createNewNode(currentRow, 'left')"
+                        class="absolute -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                        Left
+                    </div>
+                    <div
+                        x-show="isHover"
+                        x-transition
+                        @click="createNewNode(currentRow, 'right')"
+                        class="absolute -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                        Right
+                    </div>
+                </div>
+            </template>
+        </div>
     </main>
 </body>
 
