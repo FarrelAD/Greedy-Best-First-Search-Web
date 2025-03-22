@@ -15,8 +15,8 @@
         <h1 class="font-bold text-2xl">Greedy Best First Search Demo</h1>
     </nav>
 
-    <main class="mt-14 relative">
-        <section class="absolute z-10 top-10 left-10">
+    <main class="mt-14 relative p-12 pb-20 min-h-screen">
+        <section class="z-10 top-24 left-28 fixed">
             <button 
                 type="button"
                 class="bg-black text-white px-4 py-2 w-36 rounded cursor-pointer transition duration-200 ease-in-out transform hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600 active:scale-95">
@@ -26,81 +26,151 @@
         
         <div 
             x-data="{
-                leftChild: false,
-                rightChild: false,
+                totalNode: 1,
                 lastRow: 1,
-                createNewNode(currentRow, side) {
-                    const totalRow = document.querySelectorAll('.row').length;
-
-                    if (totalRow != currentRow) return;
-
-                    const newRow = document.createElement('div');
-                    newRow.setAttribute('x-data', `{ currentRow: ${currentRow + 1} }`);
-                    newRow.setAttribute('class', 'row my-5 mt-24');
+                getNodeName(index) {
+                    let column = '';
+                    while (index >= 0) {
+                        column = String.fromCharCode((index % 26) + 65) + column;
+                        index = Math.floor(index / 26) - 1;
+                    }
+                    return column;
+                },
+                createNewNode(indexAtGroup, currentRow, indexGroup, side) {
+                    if (currentRow == 4) return;
 
                     const template = document.getElementById('node-template');
-                    const clonedTemplate = template.content.cloneNode(true);
-                    newRow.appendChild(clonedTemplate);
-                    
-                    $el.appendChild(newRow);
+                    const clonedNodeTemplate = template.content.cloneNode(true);
+
+                    clonedNodeTemplate.getElementById('node-name').textContent = this.getNodeName(this.totalNode);
+
+                    clonedNodeTemplate.getElementById('node').setAttribute('x-data', `{ 
+                        isHover: false, 
+                        indexAtGroup: ${side == 'left' ? 0 : 1},
+                        haveLeftChild: false,
+                        haveRightChild: false,
+                        timeoutId: null 
+                    }`);
+
+                    const rows = document.querySelectorAll('.row');
+                    if (rows.length != currentRow) {
+                        const groupNodes = rows[currentRow].querySelectorAll('.group-node');
+
+                        console.log('index group node: ', indexAtGroup);
+                        console.log('data group: ')
+                        console.log(groupNodes)
+
+                        console.log('target')
+                        console.log(groupNodes[indexAtGroup])
+
+                        if (side == 'left') {
+                            groupNodes[indexAtGroup].prepend(clonedNodeTemplate);
+                        } else {
+                            groupNodes[indexAtGroup].appendChild(clonedNodeTemplate);
+                        }
+
+                        this.totalNode++;
+                    } else {
+                        const newRow = document.createElement('div');
+                        newRow.setAttribute('x-data', `{ currentRow: ${currentRow + 1} }`);
+                        newRow.setAttribute('class', 'row w-full my-5 flex justify-around');
+
+                        const totalGroup = (2 ** currentRow) / 2;
+                        const groupNodes = [];
+                        for (let i = 0; i < totalGroup; i++) {
+                            const newGroupNode = document.createElement('div');
+                            newGroupNode.setAttribute('x-data', `{ indexGroup: ${i + 1}}`);
+                            newGroupNode.setAttribute('class', 'group-node flex justify-around w-full');
+
+                            groupNodes.push(newGroupNode);
+
+                            this.totalNode++;
+                        }
+
+                        console.log('group nodes')
+                        console.log(groupNodes)
+                        console.log('data angka: ', indexGroup + indexAtGroup)
+                        groupNodes[indexGroup + indexAtGroup].appendChild(clonedNodeTemplate);
+
+                        groupNodes.forEach(el => newRow.appendChild(el));
+
+                        $el.appendChild(newRow);
+                    }
                 }
             }"
             id="node-tree-content" 
             class="flex flex-col items-center justify-center">
             <div
                 x-data="{
-                    currentRow: 1
+                    currentRow: 1,
+                    totalChild: 0
                 }"
-                class="row my-5">
+                class="row w-full my-5 flex justify-around">
                 <div
                     x-data="{
-                        isHover: false,
-                        timeoutId: null
+                        indexGroup: 0
                     }"
-                    @click="console.log('Node a clicked!')"
-                    @mouseenter="isHover = true; clearTimeout(timeoutId)"
-                    @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
-                    class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
-                    A
+                    class="group-node flex justify-around">
+                    <div
+                        x-data="{
+                            isHover: false,
+                            indexAtGroup: 0,
+                            haveLeftChild: false,
+                            haveRightChild: false,
+                            timeoutId: null
+                        }"
+                        @mouseenter="isHover = true; clearTimeout(timeoutId)"
+                        @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
+                        id="node"
+                        class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
+                        <span id="node-name">A</span>
     
-                    <div
-                        x-show="isHover"
-                        x-transition
-                        @click="createNewNode(currentRow, 'left')"
-                        class="absolute -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                        Left
-                    </div>
+                        <div
+                            x-show="isHover && !haveLeftChild"
+                            x-transition
+                            @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'left'); haveLeftChild = true;"
+                            class="absolute -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                            Left
+                        </div>
 
-                    <div
-                        x-show="isHover"
-                        x-transition
-                        @click="createNewNode(currentRow, 'right')"
-                        class="absolute -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                        Right
+                        <div
+                            x-show="isHover && !haveRightChild"
+                            x-transition
+                            @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'right'); haveRightChild = true;"
+                            class="absolute -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                            Right
+                        </div>
                     </div>
                 </div>
             </div>
 
-            
+
             <template id="node-template">
                 <div
-                    x-data="{ isHover: false, timeoutId: null }"
-                    @click="console.log('Node a clicked!')"
+                    x-data="{ 
+                        isHover: false, 
+                        indexAtGroup: 0,
+                        haveLeftChild: false,
+                        haveRightChild: false,
+                        timeoutId: null 
+                    }"
                     @mouseenter="isHover = true; clearTimeout(timeoutId)"
                     @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
+                    id="node"
                     class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
-                    A
+                    <span id="node-name">A</span>
+
                     <div
-                        x-show="isHover"
+                        x-show="isHover && !haveLeftChild"
                         x-transition
-                        @click="createNewNode(currentRow, 'left')"
+                        @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'left'); haveLeftChild = true;"
                         class="absolute -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
                         Left
                     </div>
                     <div
-                        x-show="isHover"
+                        x-show="isHover && !haveRightChild"
                         x-transition
-                        @click="createNewNode(currentRow, 'right')"
+                        @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'right'); haveRightChild = true;"
                         class="absolute -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
                         Right
                     </div>
