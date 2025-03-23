@@ -43,7 +43,6 @@
                     const clonedNodeTemplate = template.content.cloneNode(true);
 
                     clonedNodeTemplate.getElementById('node-name').textContent = this.getNodeName(this.totalNode);
-
                     clonedNodeTemplate.getElementById('node').setAttribute('x-data', `{ 
                         isHover: false, 
                         indexAtGroup: ${side == 'left' ? 0 : 1},
@@ -52,21 +51,16 @@
                         timeoutId: null 
                     }`);
 
+                    const index = indexAtGroup == 0 ? indexGroup + indexGroup : indexGroup + indexGroup + 1;
+
                     const rows = document.querySelectorAll('.row');
                     if (rows.length != currentRow) {
                         const groupNodes = rows[currentRow].querySelectorAll('.group-node');
 
-                        console.log('index group node: ', indexAtGroup);
-                        console.log('data group: ')
-                        console.log(groupNodes)
-
-                        console.log('target')
-                        console.log(groupNodes[indexAtGroup])
-
                         if (side == 'left') {
-                            groupNodes[indexAtGroup].prepend(clonedNodeTemplate);
+                            groupNodes[index].prepend(clonedNodeTemplate);
                         } else {
-                            groupNodes[indexAtGroup].appendChild(clonedNodeTemplate);
+                            groupNodes[index].appendChild(clonedNodeTemplate);
                         }
 
                         this.totalNode++;
@@ -75,11 +69,11 @@
                         newRow.setAttribute('x-data', `{ currentRow: ${currentRow + 1} }`);
                         newRow.setAttribute('class', 'row w-full my-5 flex justify-around');
 
-                        const totalGroup = (2 ** currentRow) / 2;
+                        const totalGroup = 2 ** (currentRow - 1);
                         const groupNodes = [];
                         for (let i = 0; i < totalGroup; i++) {
                             const newGroupNode = document.createElement('div');
-                            newGroupNode.setAttribute('x-data', `{ indexGroup: ${i + 1}}`);
+                            newGroupNode.setAttribute('x-data', `{ indexGroup: ${i}}`);
                             newGroupNode.setAttribute('class', 'group-node flex justify-around w-full');
 
                             groupNodes.push(newGroupNode);
@@ -87,10 +81,7 @@
                             this.totalNode++;
                         }
 
-                        console.log('group nodes')
-                        console.log(groupNodes)
-                        console.log('data angka: ', indexGroup + indexAtGroup)
-                        groupNodes[indexGroup + indexAtGroup].appendChild(clonedNodeTemplate);
+                        groupNodes[index].appendChild(clonedNodeTemplate);
 
                         groupNodes.forEach(el => newRow.appendChild(el));
 
@@ -129,7 +120,7 @@
                             x-show="isHover && !haveLeftChild"
                             x-transition
                             @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'left'); haveLeftChild = true;"
-                            class="absolute -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                            class="absolute z-20 -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
                             Left
                         </div>
 
@@ -137,7 +128,7 @@
                             x-show="isHover && !haveRightChild"
                             x-transition
                             @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'right'); haveRightChild = true;"
-                            class="absolute -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                            class="absolute z-20 -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
                             Right
                         </div>
                     </div>
@@ -164,14 +155,14 @@
                         x-show="isHover && !haveLeftChild"
                         x-transition
                         @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'left'); haveLeftChild = true;"
-                        class="absolute -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                        class="absolute z-20 -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
                         Left
                     </div>
                     <div
                         x-show="isHover && !haveRightChild"
                         x-transition
                         @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'right'); haveRightChild = true;"
-                        class="absolute -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                        class="absolute z-20 -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
                         Right
                     </div>
                 </div>
