@@ -28,37 +28,17 @@
             x-data="{
                 totalNode: 0,
                 lastRow: 1,
-                getArrowAngle(node1, node2, arrow) {
-                    console.log('node1')
-                    console.log(node1)
-
-                    console.log('node2')
-                    console.log(node2)
-
-                    console.log('arrow')
-                    console.log(arrow)
-
+                getArrowAngle(node1, node2) {
                     const x1 = node1.offsetLeft + node1.offsetWidth / 2;
                     const y1 = node1.offsetTop + node1.offsetHeight / 2;
                     const x2 = node2.offsetLeft + node2.offsetWidth / 2;
                     const y2 = node2.offsetTop + node2.offsetHeight / 2;
 
-                    const centerX = (x1 + x2) / 2;
-                    const centerY = (y1 + y2) / 2;
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
 
-                    const dot1 = document.createElement('div')
-                    dot1.classList.add('absolute', 'bg-blue-500', 'rounded', 'w-4', 'h-4', `left-[${x1}px]`, `top-[${y1}px]`)
-                    const dot2 = document.createElement('div')
-                    dot2.classList.add('absolute', 'bg-red-500', 'rounded', 'w-4', 'h-4', `left-[${x2}px]`, `top-[${y2}px]`)
-
-                    document.getElementsByTagName('main')[0].append(dot1, dot2)
-
-
-
-                    const angle =  Math.atan2(centerY - arrow.offsetTop - arrow.offsetHeight / 2, 
-                                    centerX - arrow.offsetLeft - arrow.offsetWidth / 2) * (180 / Math.PI);
-                    
-                    return Math.round(angle);
+                    // return in degree scale
+                    return Math.atan2(dy, dx) * 180 / Math.PI;
                 },
                 getNodeName(index) {
                     let column = '';
@@ -69,7 +49,9 @@
                     return column;
                 },
                 createNewNode(indexAtGroup, currentRow, indexGroup, side, parentElement) {
-                    if (currentRow == 4) return;
+                    if (currentRow == 4) {
+                        return console.warn('The tree data structure has reach the limit of rows. Can not add new node anymore!');
+                    }
 
                     const template = document.getElementById('node-template');
                     const clonedNodeTemplate = template.content.cloneNode(true);
@@ -109,41 +91,34 @@
                             newGroupNode.setAttribute('class', 'group-node flex justify-around w-full');
 
                             groupNodes.push(newGroupNode);
-
-                            this.totalNode++;
                         }
-
+                        
                         groupNodes[index].appendChild(clonedNodeTemplate);
+                        this.totalNode++;
+
                         groupNodes.forEach(el => newRow.appendChild(el));
 
                         const arrowCloned = document.getElementById('arrow-template').content.cloneNode(true);
 
-                        const starterNodeContainer = document.getElementById('starter-node-container');
-                        starterNodeContainer.appendChild(newRow);
-
-                        // const arrow = arrowCloned.getElementsByClassName('arrow')[0];
-                        // arrow.classList.add(`rotate-[${this.getArrowAngle()}deg]`);
-
                         const arrows = document.createElement('div');
-                        arrows.setAttribute('class', 'w-full');
+                        arrows.classList.add('arrows', 'w-full', 'flex', 'justify-center');
                         arrows.appendChild(arrowCloned);
 
+                        const starterNodeContainer = document.getElementById('starter-node-container');
+                        starterNodeContainer.append(arrows, newRow);
                         
-                        const firstArrow = arrows.querySelector('.arrow-group');
-                        firstArrow.setAttribute('x-data', `{ startPoint: 0, endPoint: 0, angle: 0 }`)
+                        const selectedArrows = document.querySelectorAll('.arrows')[currentRow - 1];
+                        const firstArrow = selectedArrows.querySelector('.arrow-group');
+                        
+                        const nodes = starterNodeContainer.querySelectorAll('.node');
+                        const newAppendedNode = nodes[nodes.length - 1];
+                        const angle = this.getArrowAngle(parentElement, newAppendedNode);
 
-                        // const newAppendedNode = starterNodeContainer.querySelector('.node:last-of-type')
-                        // console.log('new appenended node: ')
-                        //console.log(newAppendedNode)
-
-                        console.log('starternode')
-                        console.log(starterNodeContainer)
-
-                        console.log('get arrow angle:')
-                        console.log(this.getArrowAngle(parentElement, newAppendedNode, firstArrow))
-
-                        const lastChild = starterNodeContainer.children[starterNodeContainer.children.length - 1];
-                        starterNodeContainer.insertBefore(arrows, lastChild);
+                        firstArrow.setAttribute('x-data', `{ 
+                            startPoint: { x: ${parentElement.offsetLeft + parentElement.offsetWidth / 2}, y: ${selectedArrows.offsetTop} }, 
+                            endPoint: { x: ${newAppendedNode.offsetLeft + newAppendedNode.offsetWidth / 2}, y: ${selectedArrows.offsetTop + selectedArrows.offsetHeight} }, 
+                            angle: ${angle}
+                        }`);
                     }
                 }
             }"
@@ -196,6 +171,9 @@
 
 
             <div
+                x-data="{
+                    angle: 90
+                }"
                 x-show="totalNode == 0"
                 id="arrows-node-container">
                 <div class="relative">
@@ -207,10 +185,10 @@
                         class="w-6 h-6 appearance-none bg-transparent text-center absolute top-1/2 -translate-y-1/2 -left-5 focus:outline-none"
                         style="-moz-appearance: textfield; appearance: textfield;">
 
-                    <svg class="arrow" width="30" height="75" viewBox="0 0 30 70">
-                        <line x1="15" y1="0" x2="15" y2="60" stroke="black" stroke-width="1" />
-                        <polyline points="10,60 15,70 20,60" fill="black" />
-                    </svg>
+                    <svg :class="`rotate-[${angle}deg]`" class="arrow" width="75" height="30" viewBox="0 0 70 30">
+                        <line x1="0" y1="15" x2="60" y2="15" stroke="black" stroke-width="1" />
+                        <polyline points="60,10 70,15 60,20" fill="black" />
+                    </svg>           
                 </div>
             </div>
 
@@ -229,10 +207,10 @@
             <template id="arrow-template">
                 <div
                     x-data="{
-                        startPoint: 0,
-                        endPoint: 0,
-                        angle: 0
-                    }" 
+                        startPoint: { x: 0, y: 0 },
+                        endPoint: { x: 0, y: 0 },
+                        angle: 90
+                    }"
                     class="arrow-group relative">
                     <input 
                         type="number" 
@@ -242,10 +220,10 @@
                         class="w-6 h-6 appearance-none bg-transparent text-center absolute top-1/2 -translate-y-1/2 -left-5 focus:outline-none"
                         style="-moz-appearance: textfield; appearance: textfield;">
 
-                    <svg class="arrow rotate-[30deg]" width="30" height="75" viewBox="0 0 30 70">
-                        <line x1="15" y1="0" x2="15" y2="60" stroke="black" stroke-width="1" />
-                        <polyline points="10,60 15,70 20,60" fill="black" />
-                    </svg>
+                    <svg :class="`rotate-[${angle}deg] top-[${startPoint.y}] left-[${startPoint.x}]`" class="arrow" width="75" height="30" viewBox="0 0 70 30">
+                        <line x1="0" y1="15" x2="60" y2="15" stroke="black" stroke-width="1" />
+                        <polyline points="60,10 70,15 60,20" fill="black" />
+                    </svg>   
                 </div>
             </template>
 
