@@ -6,21 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Greedy Best First Search Demo</title>
     <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
 
-<body class="bg-gray-100 py-5 px-12 min-h-screen">
-    <nav class="fixed top-0 py-5 px-2">
-        <h1 class="font-bold text-2xl">Greedy Best First Search Demo</h1>
+<body class="py-5 px-12 min-h-screen">
+    <nav class="navbar fixed top-0">
+        <div class="navbar-start">
+            <h1 class="text-2xl font-bold">Greedy Best First Search Demo</h1>
+        </div>
     </nav>
 
     <main class="mt-14 relative p-12 pb-20 h-screen min-h-screen">
         <section class="z-10 top-24 left-28 fixed bg-white">
-            <button type="button"
-                class="bg-black text-white px-4 py-2 w-36 rounded cursor-pointer transition duration-200 ease-in-out transform hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600 active:scale-95">
-                Run
-            </button>
+            <button type="button" class="btn btn-neutral w-36">Run</button>
         </section>
 
         <div class="h-full">
@@ -44,7 +44,7 @@
             ];
 
             const svg = d3.select("svg");
-            
+
             const width = window.innerWidth, height = window.innerHeight;
             const simulation = d3.forceSimulation(nodes)
                 .force("link", d3.forceLink(links).id(d => d.id).distance(100))
