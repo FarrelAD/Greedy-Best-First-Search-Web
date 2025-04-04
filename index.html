@@ -15,250 +15,75 @@
         <h1 class="font-bold text-2xl">Greedy Best First Search Demo</h1>
     </nav>
 
-    <main class="mt-14 relative p-12 pb-20 min-h-screen">
+    <main class="mt-14 relative p-12 pb-20 h-screen min-h-screen">
         <section class="z-10 top-24 left-28 fixed bg-white">
-            <button 
-                type="button"
+            <button type="button"
                 class="bg-black text-white px-4 py-2 w-36 rounded cursor-pointer transition duration-200 ease-in-out transform hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600 active:scale-95">
                 Run
             </button>
         </section>
-        
-        <div 
-            x-data="{
-                totalNode: 0,
-                lastRow: 1,
-                getArrowAngle(node1, node2) {
-                    const x1 = node1.offsetLeft + node1.offsetWidth / 2;
-                    const y1 = node1.offsetTop + node1.offsetHeight / 2;
-                    const x2 = node2.offsetLeft + node2.offsetWidth / 2;
-                    const y2 = node2.offsetTop + node2.offsetHeight / 2;
 
-                    const dx = x2 - x1;
-                    const dy = y2 - y1;
-
-                    // return in degree scale
-                    return Math.atan2(dy, dx) * 180 / Math.PI;
-                },
-                getNodeName(index) {
-                    let column = '';
-                    while (index >= 0) {
-                        column = String.fromCharCode((index % 26) + 65) + column;
-                        index = Math.floor(index / 26) - 1;
-                    }
-                    return column;
-                },
-                createNewNode(indexAtGroup, currentRow, indexGroup, side, parentElement) {
-                    if (currentRow == 4) {
-                        return console.warn('The tree data structure has reach the limit of rows. Can not add new node anymore!');
-                    }
-
-                    const template = document.getElementById('node-template');
-                    const clonedNodeTemplate = template.content.cloneNode(true);
-
-                    clonedNodeTemplate.getElementById('node-name').textContent = this.getNodeName(this.totalNode);
-                    clonedNodeTemplate.querySelector('.node').setAttribute('x-data', `{ 
-                        isHover: false, 
-                        indexAtGroup: ${side == 'left' ? 0 : 1},
-                        haveLeftChild: false,
-                        haveRightChild: false,
-                        timeoutId: null 
-                    }`);
-
-                    const index = indexAtGroup == 0 ? 2 * indexGroup : 2 * indexGroup  + 1;
-
-                    const rows = document.querySelectorAll('.row');
-                    if (rows.length != currentRow) {
-                        const groupNodes = rows[currentRow].querySelectorAll('.group-node');
-
-                        if (side == 'left') {
-                            groupNodes[index].prepend(clonedNodeTemplate);
-                        } else {
-                            groupNodes[index].appendChild(clonedNodeTemplate);
-                        }
-
-                        this.totalNode++;
-                    } else {
-                        const newRow = document.createElement('div');
-                        newRow.setAttribute('x-data', `{ currentRow: ${currentRow + 1} }`);
-                        newRow.setAttribute('class', 'row w-full my-20 flex justify-around');
-
-                        const totalGroup = 2 ** (currentRow - 1);
-                        const groupNodes = [];
-                        for (let i = 0; i < totalGroup; i++) {
-                            const newGroupNode = document.createElement('div');
-                            newGroupNode.setAttribute('x-data', `{ indexGroup: ${i}}`);
-                            newGroupNode.setAttribute('class', 'group-node flex justify-around w-full');
-
-                            groupNodes.push(newGroupNode);
-                        }
-                        
-                        groupNodes[index].appendChild(clonedNodeTemplate);
-                        this.totalNode++;
-
-                        groupNodes.forEach(el => newRow.appendChild(el));
-
-                        const arrowCloned = document.getElementById('arrow-template').content.cloneNode(true);
-
-                        const arrows = document.createElement('div');
-                        arrows.classList.add('arrows', 'w-full', 'flex', 'justify-center');
-                        arrows.appendChild(arrowCloned);
-
-                        const starterNodeContainer = document.getElementById('starter-node-container');
-                        starterNodeContainer.append(arrows, newRow);
-                        
-                        const selectedArrows = document.querySelectorAll('.arrows')[currentRow - 1];
-                        const firstArrow = selectedArrows.querySelector('.arrow-group');
-                        
-                        const nodes = starterNodeContainer.querySelectorAll('.node');
-                        const newAppendedNode = nodes[nodes.length - 1];
-                        const angle = this.getArrowAngle(parentElement, newAppendedNode);
-
-                        firstArrow.setAttribute('x-data', `{ 
-                            startPoint: { x: ${parentElement.offsetLeft + parentElement.offsetWidth / 2}, y: ${selectedArrows.offsetTop} }, 
-                            endPoint: { x: ${newAppendedNode.offsetLeft + newAppendedNode.offsetWidth / 2}, y: ${selectedArrows.offsetTop + selectedArrows.offsetHeight} }, 
-                            angle: ${angle}
-                        }`);
-                    }
-                }
-            }"
-            id="node-tree-content" 
-            class="flex flex-col items-center justify-center">
-            <div id="starter-node-container" class="w-full">
-                <div
-                    x-data="{
-                        currentRow: 1,
-                        totalChild: 0
-                    }"
-                    class="row w-full mt-4 mb-20 flex justify-around">
-                    <div
-                        x-data="{
-                            indexGroup: 0
-                        }"
-                        class="group-node flex justify-around">
-                        <div
-                            x-data="{
-                                isHover: false,
-                                indexAtGroup: 0,
-                                haveLeftChild: false,
-                                haveRightChild: false,
-                                timeoutId: null
-                            }"
-                            @mouseenter="isHover = true; clearTimeout(timeoutId)"
-                            @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
-                            class="node relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
-                            <span id="node-name">START</span>
-
-                            <div
-                                x-show="isHover && !haveLeftChild"
-                                x-transition
-                                @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'left', $el.parentElement); haveLeftChild = true;"
-                                class="absolute z-20 -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                                Left
-                            </div>
-
-                            <div
-                                x-show="isHover && !haveRightChild"
-                                x-transition
-                                @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'right', $el.parentElement); haveRightChild = true;"
-                                class="absolute z-20 -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                                Right
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            <div
-                x-data="{
-                    angle: 90
-                }"
-                x-show="totalNode == 0"
-                id="arrows-node-container">
-                <div class="relative">
-                    <input 
-                        type="number" 
-                        name="1" 
-                        min="0"
-                        value="0"
-                        class="w-6 h-6 appearance-none bg-transparent text-center absolute top-1/2 -translate-y-1/2 -left-5 focus:outline-none"
-                        style="-moz-appearance: textfield; appearance: textfield;">
-
-                    <svg :class="`rotate-[${angle}deg]`" class="arrow" width="75" height="30" viewBox="0 0 70 30">
-                        <line x1="0" y1="15" x2="60" y2="15" stroke="black" stroke-width="1" />
-                        <polyline points="60,10 70,15 60,20" fill="black" />
-                    </svg>           
-                </div>
-            </div>
-
-
-            <div id="end-node-container" class="w-full flex justify-center mt-20">
-                <div
-                    x-data="{ }"
-                    id="node"
-                    class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
-                    <span id="node-name">END</span>
-                </div>
-            </div>
-
-
-
-            <template id="arrow-template">
-                <div
-                    x-data="{
-                        startPoint: { x: 0, y: 0 },
-                        endPoint: { x: 0, y: 0 },
-                        angle: 90
-                    }"
-                    class="arrow-group relative">
-                    <input 
-                        type="number" 
-                        name="1" 
-                        min="0"
-                        value="0"
-                        class="w-6 h-6 appearance-none bg-transparent text-center absolute top-1/2 -translate-y-1/2 -left-5 focus:outline-none"
-                        style="-moz-appearance: textfield; appearance: textfield;">
-
-                    <svg :class="`rotate-[${angle}deg] top-[${startPoint.y}] left-[${startPoint.x}]`" class="arrow" width="75" height="30" viewBox="0 0 70 30">
-                        <line x1="0" y1="15" x2="60" y2="15" stroke="black" stroke-width="1" />
-                        <polyline points="60,10 70,15 60,20" fill="black" />
-                    </svg>   
-                </div>
-            </template>
-
-
-            <template id="node-template">
-                <div
-                    x-data="{ 
-                        isHover: false, 
-                        indexAtGroup: 0,
-                        haveLeftChild: false,
-                        haveRightChild: false,
-                        timeoutId: null 
-                    }"
-                    @mouseenter="isHover = true; clearTimeout(timeoutId)"
-                    @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
-                    class="node relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
-                    <span id="node-name">A</span>
-
-                    <div
-                        x-show="isHover && !haveLeftChild"
-                        x-transition
-                        @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'left'); haveLeftChild = true;"
-                        class="absolute z-20 -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                        Left
-                    </div>
-                    <div
-                        x-show="isHover && !haveRightChild"
-                        x-transition
-                        @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'right'); haveRightChild = true;"
-                        class="absolute z-20 -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                        Right
-                    </div>
-                </div>
-            </template>
+        <div class="h-full">
+            <svg width="100%" height="100%"></svg>
         </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+        <script type="module">
+            const nodes = [
+                { id: "A" },
+                { id: "B" },
+                { id: "C" },
+                { id: "D" }
+            ];
+
+            const links = [
+                { source: "A", target: "B", cost: 1 },
+                { source: "A", target: "C", cost: 2 },
+                { source: "B", target: "D", cost: 4 },
+                { source: "C", target: "D", cost: 3 },
+            ];
+
+            const svg = d3.select("svg");
+            
+            const width = window.innerWidth, height = window.innerHeight;
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const node = svg.append("g")
+                .selectAll("g")
+                .data(nodes)
+                .join("g")
+                .attr("class", "node");
+
+            node.append("circle")
+                .attr("r", 20)
+                .attr("fill", "#69b3a2");
+
+            node.append("text")
+                .attr("text-anchor", "middle")
+                .attr("y", 5)
+                .text(d => `${d.id}`);
+
+            const link = svg.append("g")
+                .attr("stroke", "#999")
+                .attr("stroke-opacity", 0.6)
+                .selectAll("line")
+                .data(links)
+                .join("line")
+                .attr("stroke-width", d => Math.sqrt(d.cost));
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+        </script>
     </main>
 </body>
 
