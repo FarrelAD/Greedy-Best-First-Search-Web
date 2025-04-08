@@ -41,127 +41,60 @@
                 <div class="card-body">
                     <div class="card-title font-bold">Controller</div>
 
-                    <div class="tabs tabs-border">
-                        <input type="radio" name="tab-nav" class="tab mb-4" aria-label="Input" checked="checked"/>
-                        <div class="tab-content">
-                            <label class="floating-label">
-                                <input 
-                                    x-init="$store.nodes.updateNode($el.value)"
-                                    @input="$store.nodes.updateNode($el.value)"
-                                    type="number" 
-                                    class="input input-neutral input-sm validator" 
-                                    required 
-                                    placeholder="Total node" 
-                                    min="2" 
-                                    value="2"
-                                    title="Total node">
-                                <p class="validator-hint text-xs">The minimum of total node is 2</p>
-                                <span>Total node</span>
-                            </label>
-    
-                            <div class="overflow-y-auto max-h-52">
-                                <table
-                                    class="table table-zebra">
-                                    <thead class="sticky top-0 bg-white z-10">
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Node</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <template x-for="(val, index) in $store.nodes.nodes" :key="index">
-                                            <tr>
-                                                <td x-text="index + 1"></td>
-                                                <td>
-                                                    <input 
-                                                        @input="$store.nodes.updateNodeProperty(index, $el.value)"
-                                                        type="text" 
-                                                        class="input input-ghost focus:outline-none focus:border-none focus:ring-0 focus:bg-transparent" 
-                                                        placeholder="Name">
-                                                </td>
-                                            </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    
-                        <input type="radio" name="tab-nav" class="tab mb-4" aria-label="Paths"/>
-                        <div class="tab-content">
-                            <div
-                                x-data="pathTableComponent" 
-                                class="overflow-y-auto max-h-52">
-                                <table class="table table-zebra">
-                                    <thead class="sticky top-0 bg-white z-10">
-                                        <tr>
-                                            <th class="w-10">Edge ID</th>
-                                            <th>Source</th>
-                                            <th>Target</th>
-                                            <th class="w-10">Weight</th>
-                                        </tr>
-                                    </thead>
-    
-                                    <tbody>
-                                        <template x-for="row in rows" :key="row.id">
-                                            <tr 
-                                                x-data="pathRowTableComponent">
-                                                <td x-text="row.id" class="w-10"></td>
-                                                <td>
-                                                    <select 
-                                                        @input="handleChange()"
-                                                        x-model="selectedSource"
-                                                        class="select select-ghost focus:outline-none focus:border-none focus:bg-transparent">
-                                                        <template x-for="(target, index) in $store.nodes.nodes" :key="target.id">
-                                                            <option x-text="target.name"  :value="target.name"></option>
-                                                        </template>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <select 
-                                                        @input="handleChange()"
-                                                        x-model="selectedTarget"
-                                                        class="select select-ghost focus:outline-none focus:border-none focus:bg-transparent">
-                                                        <template x-for="target in $store.nodes.nodes.filter(n => n.name !== selectedSource )" :key="target.id">
-                                                            <option x-text="target.name" :value="target.name"></option>
-                                                        </template>
-                                                    </select>
-                                                </td>
-                                                <td class="w-10">
-                                                    <input 
-                                                        x-model.number="weight"
-                                                        @input="handleChange()"
-                                                        type="number"
-                                                        min="0"
-                                                        class="input input-ghost focus:outline-none focus:border-none focus:ring-0 focus:bg-transparent"
-                                                        value="0">
-                                                </td>
-                                            </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
+                    <hr>
 
-                                <div 
-                                    class="w-full">
-                                    <button 
-                                        class="btn btn-xs btn-outline w-full"
-                                        @click="addRow()">
-                                        + Add Row
-                                    </button>
-                                </div>
-                            </div>
+                    <div class="my-4">
+                        <label class="floating-label">
+                            <input 
+                                x-init="$store.nodes.updateNode($el.value)"
+                                @input="$store.nodes.updateNode($el.value)"
+                                type="number" 
+                                class="input input-neutral input-sm validator" 
+                                required 
+                                placeholder="Total node" 
+                                min="2" 
+                                value="2"
+                                title="Total node">
+                            <p class="validator-hint text-xs">The minimum of total node is 2</p>
+                            <span>Total node</span>
+                        </label>
 
-                            <div class="mt-4">
-                                <button 
-                                    @click="createGraph()"
-                                    type="button" 
-                                    class="btn btn-neutral w-full btn-sm">
-                                    Create Graph
-                                </button>
-                            </div>
+                        <div class="overflow-y-auto max-h-52">
+                            <table
+                                class="table table-zebra">
+                                <thead class="sticky top-0 bg-white z-10">
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Node</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(val, index) in $store.nodes.nodes" :key="index">
+                                        <tr>
+                                            <td x-text="index + 1"></td>
+                                            <td>
+                                                <input 
+                                                    @input="$store.nodes.updateNodeProperty(index, $el.value)"
+                                                    type="text" 
+                                                    class="input input-ghost focus:outline-none focus:border-none focus:ring-0 focus:bg-transparent" 
+                                                    placeholder="Name">
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     
                     <div class="card-actions justify-center mt-auto">
+                        <button 
+                            @click="createGraph()"
+                            type="button"
+                            :disabled="isGraphCreated"
+                            class="btn btn-neutral w-full btn-sm">
+                            Create Graph
+                        </button>
+
                         <button
                             x-show="!isFinishRun"
                             @click="console.log('clicked')"
@@ -185,6 +118,37 @@
         <div class="h-full">
             <svg id="graph-svg" width="100%" height="100%"></svg>
         </div>
+
+        <aside 
+            x-data="tooltipComponent"
+            x-ref="nodeTooltip"
+            x-show="isShow"
+            @mouseenter="clearTimeout(timeoutID); isShow = true;" 
+            @mouseleave="isShow = false"
+            x-transition
+            id="node-tooltip"
+            class="absolute">
+            <div
+                class="card card-border card-xs bg-slate-200 shadow-sm z-30">
+                <div class="card-body">
+                    <div
+                        class="card-actions flex-col">
+                        <button 
+                            @click="setNode('start')"
+                            id="start-btn-node"
+                            class="btn btn-xs btn-primary w-full">
+                            Set as start node
+                        </button>
+                        <button 
+                            @click="setNode('end')"
+                            id="end-btn-node"
+                            class="btn btn-xs btn-secondary w-full">
+                            Set as end node
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
         <script src="assets/states.js"></script>
         <script src="assets/components.js"></script>

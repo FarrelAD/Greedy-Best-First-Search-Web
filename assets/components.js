@@ -1,5 +1,7 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('mainComponent', () => ({
+        nodeTooltip: null,
+        isGraphCreated: false,
         selectedNode: null,
         simulation: null,
         svg: null,
@@ -8,6 +10,22 @@ document.addEventListener('alpine:init', () => {
         linkLabels: null,
         linksData: [],
         init() {
+            this.nodeTooltip = document.getElementById('node-tooltip');
+
+            this.$watch(
+                () => this.$store.nodes.startNode,
+                (val, oldVal) => {
+                    if (val === oldVal) return;
+
+                    this.updateNode(val, 'start')
+                }
+            );
+
+            this.$watch(
+                () => this.$store.nodes.endNode,
+                val => this.updateNode(val, 'end')
+            );
+
             // this.createGraph();
 
             // this.$watch(
@@ -42,96 +60,131 @@ document.addEventListener('alpine:init', () => {
                 .attr("class", "link-label")
                 .attr("font-size", "12px")
                 .attr("fill", "#333");
-    
-            const handleNodeClick = (event, d) => {
-                if (this.selectedNode === null) {
-                    this.selectedNode = d;
-                    d3.select(event.currentTarget).select("circle").attr("fill", "orange");
-                } else if (this.selectedNode !== d) {
-                    this.linksData.push({ source: this.selectedNode, target: d });
-                    this.selectedNode = null;
-                    d3.selectAll("circle").attr("fill", "steelblue");
-                    this.updateLinks();
-                } else {
-                    this.selectedNode = null;
-                    d3.selectAll("circle").attr("fill", "steelblue");
-                }
-            }
-    
-            const dragstarted = (event, d) => {
-                this.simulation.alpha(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
-    
-            const dragged = (event, d) => {
-                d.fx = event.x;
-                d.fy = event.y;
-                this.updatePositions();
-            }
-    
-            const dragended = (event, d) => {
-                this.simulation.alpha(0);
-            }
             
-            const node = this.svg.selectAll(".node")
+            this.circleNodes = this.svg.selectAll(".node")
                 .data(nodes)
                 .enter()
-                .append("g")
-                .attr("class", "node")
-                .attr("transform", d => `translate(${d.fx}, ${d.fy})`)
-                .on("click", handleNodeClick)
+                .append('g')
+                .attr('class', 'node cursor-pointer')
+                .attr('transform', d => `translate(${d.fx}, ${d.fy})`)
+                .on('click', (event, d) => {
+                    if (this.selectedNode === null) {
+                        this.selectedNode = d;
+
+                        d3.select(event.currentTarget)
+                            .select('circle')
+                            .attr('fill', 'orange');
+                    } else if (this.selectedNode !== d) {
+                        this.linksData.push({ source: this.selectedNode, target: d });
+
+                        let actualColorNode = 'steelblue';
+                        if (this.selectedNode.index === this.$store.nodes.startNode?.index) {
+                            actualColorNode = 'red';
+                        } else if (this.selectedNode.index === this.$store.nodes.endNode?.index) {
+                            actualColorNode = 'blue';
+                        }
+
+                        d3.select(this.circleNodes.nodes()[this.selectedNode.index])
+                            .select('circle')
+                            .attr('fill', actualColorNode);
+
+                        this.selectedNode = null;
+                        d3.selectAll(event.currentTarget)
+                            .attr('fill', 'steelblue');
+                        
+                        this.updateLinks();
+                    }
+                })
+                .on('contextmenu', (event, d) => {
+                    event.preventDefault();
+
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const centerY = rect.top + rect.height / 2;
+                    const centerX = rect.left + rect.width / 2;
+
+                    const top = centerY + this.nodeTooltip.offsetHeight;
+                    const left = centerX - this.nodeTooltip.offsetWidth;
+
+                    [...this.nodeTooltip.classList].forEach(cls => {
+                        if (cls.startsWith('left-[') || cls.startsWith('top-[')) {
+                            this.nodeTooltip.classList.remove(cls);
+                        }
+                    });
+
+                    this.nodeTooltip.classList.add(`left-[${left}px]`, `top-[${top}px]`);
+
+                    const tooltip = Alpine.$data(this.nodeTooltip);
+                    tooltip.show(d);
+                })
                 .call(d3.drag()
-                    .on("start", dragstarted)
-                    .on("drag", dragged)
-                    .on("end", dragended));
+                    .on('start', (event, d) => {
+                        this.simulation.alpha(0.3).restart();
+                        d.fx = d.x;
+                        d.fy = d.y;
+                    })
+                    .on('drag', (event, d) => {
+                        d.fx = event.x;
+                        d.fy = event.y;
+                        this.updatePositions();
+                    })
+                    .on('end', (event, d) => {
+                        this.simulation.alpha(0);
+                    })
+                );
     
-            node.append("circle")
-                .attr("r", 20)
-                .attr("fill", "steelblue");
+            this.circleNodes.append("circle")
+                .attr('r', 20)
+                .attr('fill', 'steelblue');
     
-            node.append("text")
-                .attr("text-anchor", "middle")
-                .attr("dy", ".35em")
-                .attr("fill", "white")
+            this.circleNodes.append("text")
+                .attr('class', 'node-text select-none')
+                .attr('text-anchor', 'middle')
+                .attr('dy', '.35em')
+                .attr('fill', 'white')
                 .text(d => d.name);
     
             this.updatePositions();
+
+            this.isGraphCreated = true;
+        },
+        updateNode(node, type) {
+            d3.select(this.circleNodes.nodes()[node.index])
+                .select('circle')
+                .attr('fill', type == 'start' ? 'red' : 'blue');
         },
         updateLinks() {
-            let linkGroup = this.svg.selectAll(".link-group")
+            let linkGroup = this.svg.selectAll('.link-group')
                 .data(this.linksData);
 
             linkGroup.exit().remove();
 
             const linkGroupEnter = linkGroup.enter()
-                .append("g")
-                .attr("class", "link-group");
+                .append('g')
+                .attr('class', 'link-group');
 
-            linkGroupEnter.append("line")
-                .attr("class", "link")
-                .attr("stroke", "#999")
-                .attr("stroke-width", 2);
+            linkGroupEnter.append('line')
+                .attr('class', 'link')
+                .attr('stroke', '#999')
+                .attr('stroke-width', 2);
 
-            linkGroupEnter.append("text")
-                .attr("class", "link-label")
-                .attr("font-size", "12px")
-                .attr("fill", "#333");
+            linkGroupEnter.append('text')
+                .attr('class', 'link-label')
+                .attr('font-size', '12px')
+                .attr('fill', '#333');
 
             linkGroup = linkGroupEnter.merge(linkGroup);
 
-            this.links = linkGroup.select("line");
-            this.linkLabels = linkGroup.select("text");
+            this.links = linkGroup.select('line');
+            this.linkLabels = linkGroup.select('text');
 
-            this.simulation.force("link").links(this.linksData);
+            this.simulation.force('link').links(this.linksData);
 
             this.updatePositions();
         },
         updatePositions() {
             this.simulation.tick();
 
-            this.svg.selectAll(".node")
-                .attr("transform", d => `translate(${d.fx ?? d.x}, ${d.fy ?? d.y})`);
+            this.circleNodes.attr("transform", d => `translate(${d.fx ?? d.x}, ${d.fy ?? d.y})`);
 
             this.links
                 .attr("x1", d => d.source.fx)
@@ -154,27 +207,20 @@ document.addEventListener('alpine:init', () => {
         isFinishRun: false
     }));
 
-    Alpine.data('pathTableComponent', () => ({
-        rows: [],
-        addRow() {
-            this.rows.push({ id: this.rows.length + 1 });
-        }
-    }));
-
-    Alpine.data('pathRowTableComponent', () => ({
-        selectedSource: null,
-        selectedTarget: null,
-        weight: 0,
-        init() {
-            this.selectedSource = this.$store.nodes.nodes[0]?.name;
-            this.selectedTarget = this.$store.nodes.nodes.find(n => n.name !== this.selectedSource)?.name;
+    Alpine.data('tooltipComponent', () => ({ 
+        isShow: false,
+        timeoutID: null,
+        selectedNode: null,
+        show(selectedNode) {
+            this.isShow = true;
+            this.selectedNode = selectedNode;
+            
+            this.timeoutID = setTimeout(() => {
+                this.isShow = false;
+            }, 1000);
         },
-        handleChange() {
-            this.$store.paths.addPath(this.row.id, { 
-                source: this.selectedSource, 
-                target: this.selectedTarget, 
-                weight: this.weight 
-            });
+        setNode(type) {
+            this.$store.nodes[type == 'start' ? 'startNode' : 'endNode'] = this.selectedNode;
         }
     }));
 });

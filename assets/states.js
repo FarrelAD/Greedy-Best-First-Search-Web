@@ -1,6 +1,8 @@
 document.addEventListener('alpine:init', () => {
     Alpine.store('nodes', {
         nodes: [],
+        startNode: null,
+        endNode: null,
         updateNode(totalNode) {
             if (totalNode <= this.nodes.length) {
                 return this.nodes.length = totalNode;
