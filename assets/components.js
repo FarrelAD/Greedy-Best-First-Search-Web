@@ -23,7 +23,11 @@ document.addEventListener('alpine:init', () => {
 
             this.$watch(
                 () => this.$store.nodes.endNode,
-                val => this.updateNode(val, 'end')
+                (val, oldVal) => {
+                    if (val === oldVal) return;
+
+                    this.updateNode(val, 'end')
+                }
             );
 
             // this.createGraph();
