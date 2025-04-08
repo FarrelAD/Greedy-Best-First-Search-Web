@@ -1,14 +1,12 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('mainComponent', () => ({
         nodeTooltip: null,
-        isGraphCreated: false,
         selectedNode: null,
         simulation: null,
         svg: null,
         circleNodes: null,
         links: null,
         linkLabels: null,
-        linksData: [],
         init() {
             this.nodeTooltip = document.getElementById('node-tooltip');
 
@@ -29,28 +27,21 @@ document.addEventListener('alpine:init', () => {
                     this.updateNode(val, oldVal, 'end')
                 }
             );
-
-            // this.createGraph();
-
-            // this.$watch(
-            //     () => this.$store.nodes.nodes,
-            //     () => this.updateGraph()
-            // );
         },
         createGraph() {
-            const nodes = this.$store.nodes.nodes;
+            const nodes = this.$store.nodes.nodesData;
     
             this.svg = d3.select('#graph-svg');
             const bbox = this.svg.node().getBoundingClientRect();
 
             this.simulation = d3.forceSimulation(nodes)
-                .force('link', d3.forceLink(this.linksData).id(d => d.name).distance(1))
+                .force('link', d3.forceLink(this.$store.links.linksData).id(d => d.name).distance(1))
                 .force('charge', d3.forceManyBody().strength(0))
                 .force('center', d3.forceCenter(bbox.width / 2, bbox.height / 2))
                 .stop();
 
             this.links = this.svg.selectAll('.link')
-                .data(this.linksData)
+                .data(this.$store.links.linksData)
                 .enter()
                 .append('line')
                 .attr('class', 'link')
@@ -58,7 +49,7 @@ document.addEventListener('alpine:init', () => {
                 .attr('stroke-width', 2);
 
             this.linkLabels = this.svg.selectAll('.link-label')
-                .data(this.linksData)
+                .data(this.$store.links.linksData)
                 .enter()
                 .append('text')
                 .attr('class', 'link-label')
@@ -79,7 +70,7 @@ document.addEventListener('alpine:init', () => {
                             .select('circle')
                             .attr('fill', 'orange');
                     } else if (this.selectedNode !== d) {
-                        this.linksData.push({ source: this.selectedNode, target: d });
+                        this.$store.links.addLink(this.selectedNode, d);
 
                         let actualColorNode = 'steelblue';
                         if (this.selectedNode.index === this.$store.nodes.startNode?.index) {
@@ -154,8 +145,6 @@ document.addEventListener('alpine:init', () => {
                 .text('h(-)');
     
             this.updatePositions();
-
-            this.isGraphCreated = true;
         },
         updateNode(node, prevNode, type) {
             if (prevNode) {
@@ -170,13 +159,17 @@ document.addEventListener('alpine:init', () => {
             
             if (type == 'start') return;
 
+            this.$store.nodes.nodesData.forEach(node => {
+                node.h = this.calculateEuclideanDistance(node, this.$store.nodes.endNode);
+            });
+
             d3.selectAll('.node')
                 .select('.node-h')
-                .text(d => `h(${this.calculateEuclideanDistance(d, this.$store.nodes.endNode)})`);
+                .text(d => `h(${d.h})`);
         },
         updateLinks() {
             let linkGroup = this.svg.selectAll('.link-group')
-                .data(this.linksData);
+                .data(this.$store.links.linksData);
 
             linkGroup.exit().remove();
 
@@ -199,7 +192,7 @@ document.addEventListener('alpine:init', () => {
             this.links = linkGroup.select('line');
             this.linkLabels = linkGroup.select('text');
 
-            this.simulation.force('link').links(this.linksData);
+            this.simulation.force('link').links(this.$store.links.linksData);
 
             this.updatePositions();
         },
@@ -219,15 +212,15 @@ document.addEventListener('alpine:init', () => {
                 .attr("y", d => (d.source.fy + d.target.fy) / 2)
                 .text(d => this.calculateEuclideanDistance(d.source, d.target));
             
+            if (this.$store.nodes.endNode) {
+                this.$store.nodes.nodesData.forEach(node => {
+                    node.h = this.calculateEuclideanDistance(node, this.$store.nodes.endNode);
+                });
+            }
+
             d3.selectAll('.node')
                 .select('.node-h')
-                .text(d => {
-                    if (this.$store.nodes.endNode) {
-                        return `h(${this.calculateEuclideanDistance(d, this.$store.nodes.endNode)})`;
-                    } else {
-                        return 'h(-)';
-                    }
-                });
+                .text(d => this.$store.nodes.endNode != null ? `h(${d.h})` : 'h(-)');
         },
         calculateEuclideanDistance(startNode, endNode) {
             const dx = endNode.fx - startNode.x;
@@ -236,16 +229,47 @@ document.addEventListener('alpine:init', () => {
             const result = Math.sqrt(dx ** 2 + dy ** 2);
             return Math.round(result * 100) / 100;
         },
-        runGreedyBestFirstSearch() {
-            const startNode = this.$store.nodes.startNode;
-            const endNode = this.$store.nodes.endNode;
+        async runGreedyBestFirstSearch() {
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-            console.info('Process started!');
+            // Find shortest path based on heuristic information            
+            const queue = [];
+            let smallestHeuristic = { target: { index: null, h: Infinity } };
+            let childrenLinks = this.$store.links.linksData.filter(item => item.source == this.$store.nodes.startNode || item.target == this.$store.nodes.startNode);
+
+            queue.push(this.$store.nodes.startNode);
+
+            do {
+                for (const link of childrenLinks) {
+                    if (link.target === this.$store.nodes.startNode) {
+                        [link.source, link.target] = [link.target, link.source];
+                    }
+
+                    if (link.target.h < smallestHeuristic.target.h) {
+                        if (smallestHeuristic.target.index != null) {
+                            d3.select(this.circleNodes.nodes()[smallestHeuristic.target.index])
+                                .select('circle')
+                                .attr('fill', 'gray');
+                        }
+                        
+                        smallestHeuristic = link;
+    
+                        d3.select(this.circleNodes.nodes()[smallestHeuristic.target.index])
+                            .select('circle')
+                            .attr('fill', 'green');
+
+                        await delay(1000);
+                    }
+                }
+
+                queue.push(smallestHeuristic);
+
+                childrenLinks = this.$store.links.linksData.filter(item => queue.at(-1).target == item.source || queue.at(-1).target == item.target);
+            } while (queue.at(-1).target.h != 0);
+            smallestHeuristic.target != null;
+            
+            console.info('RESULT: ', queue);
         }
-    }));
-
-    Alpine.data('controllerComponent', () => ({
-        isFinishRun: false
     }));
 
     Alpine.data('tooltipComponent', () => ({ 

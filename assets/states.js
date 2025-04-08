@@ -1,11 +1,11 @@
 document.addEventListener('alpine:init', () => {
     Alpine.store('nodes', {
-        nodes: [],
+        nodesData: [],
         startNode: null,
         endNode: null,
         updateNode(totalNode) {
-            if (totalNode <= this.nodes.length) {
-                return this.nodes.length = totalNode;
+            if (totalNode <= this.nodesData.length) {
+                return this.nodesData.length = totalNode;
             }
 
             const fxChoices = [200, 250, 300, 350, 400, 450, 500];
@@ -14,27 +14,18 @@ document.addEventListener('alpine:init', () => {
             do {
                 const fx = fxChoices[Math.floor(Math.random() * fxChoices.length)];
                 const fy = fyChoices[Math.floor(Math.random() * fyChoices.length)]
-                this.nodes.push({ name: '', fx: fx, fy: fy })
-            } while (this.nodes.length < totalNode);
+                this.nodesData.push({ name: '', fx: fx, fy: fy, h: 0 })
+            } while (this.nodesData.length < totalNode);
         },
         updateNodeProperty(index, name) {
-            this.nodes[index].name = name;
+            this.nodesData[index].name = name;
         }
     });
 
-    Alpine.store('paths', {
-        paths: [],
-        addPath(id, path) {
-            const index = this.paths.findIndex(path => path.id === id);
-
-            if (index === -1) {
-                return this.paths.push({ 
-                    id: id,
-                    path: path
-                });
-            }
-
-            this.paths[index].path = path;
+    Alpine.store('links', {
+        linksData: [],
+        addLink(source, target) {
+            this.linksData.push({ source: source, target: target});
         }
     });
 });
