@@ -17,7 +17,7 @@ document.addEventListener('alpine:init', () => {
                 (val, oldVal) => {
                     if (val === oldVal) return;
 
-                    this.updateNode(val, 'start')
+                    this.updateNode(val, oldVal, 'start')
                 }
             );
 
@@ -26,7 +26,7 @@ document.addEventListener('alpine:init', () => {
                 (val, oldVal) => {
                     if (val === oldVal) return;
 
-                    this.updateNode(val, 'end')
+                    this.updateNode(val, oldVal, 'end')
                 }
             );
 
@@ -40,32 +40,32 @@ document.addEventListener('alpine:init', () => {
         createGraph() {
             const nodes = this.$store.nodes.nodes;
     
-            this.svg = d3.select("#graph-svg");
+            this.svg = d3.select('#graph-svg');
             const bbox = this.svg.node().getBoundingClientRect();
 
             this.simulation = d3.forceSimulation(nodes)
-                .force("link", d3.forceLink(this.linksData).id(d => d.name).distance(1))
-                .force("charge", d3.forceManyBody().strength(0))
-                .force("center", d3.forceCenter(bbox.width / 2, bbox.height / 2))
+                .force('link', d3.forceLink(this.linksData).id(d => d.name).distance(1))
+                .force('charge', d3.forceManyBody().strength(0))
+                .force('center', d3.forceCenter(bbox.width / 2, bbox.height / 2))
                 .stop();
 
-            this.links = this.svg.selectAll(".link")
+            this.links = this.svg.selectAll('.link')
                 .data(this.linksData)
                 .enter()
-                .append("line")
-                .attr("class", "link")
-                .attr("stroke", "#999")
-                .attr("stroke-width", 2);
+                .append('line')
+                .attr('class', 'link')
+                .attr('stroke', '#999')
+                .attr('stroke-width', 2);
 
-            this.linkLabels = this.svg.selectAll(".link-label")
+            this.linkLabels = this.svg.selectAll('.link-label')
                 .data(this.linksData)
                 .enter()
-                .append("text")
-                .attr("class", "link-label")
-                .attr("font-size", "12px")
-                .attr("fill", "#333");
+                .append('text')
+                .attr('class', 'link-label')
+                .attr('font-size', '12px')
+                .attr('fill', '#333');
             
-            this.circleNodes = this.svg.selectAll(".node")
+            this.circleNodes = this.svg.selectAll('.node')
                 .data(nodes)
                 .enter()
                 .append('g')
@@ -136,25 +136,43 @@ document.addEventListener('alpine:init', () => {
                     })
                 );
     
-            this.circleNodes.append("circle")
-                .attr('r', 20)
+            this.circleNodes.append('circle')
+                .attr('r', 30)
                 .attr('fill', 'steelblue');
     
-            this.circleNodes.append("text")
-                .attr('class', 'node-text select-none')
+            this.circleNodes.append('text')
+                .attr('class', 'node-name select-none')
                 .attr('text-anchor', 'middle')
-                .attr('dy', '.35em')
                 .attr('fill', 'white')
                 .text(d => d.name);
+            
+            this.circleNodes.append('text')
+                .attr('class', 'node-h select-none text-xs')
+                .attr('text-anchor', 'middle')
+                .attr('dy', '1em')
+                .attr('fill', 'white')
+                .text('h(-)');
     
             this.updatePositions();
 
             this.isGraphCreated = true;
         },
-        updateNode(node, type) {
+        updateNode(node, prevNode, type) {
+            if (prevNode) {
+                d3.select(this.circleNodes.nodes()[prevNode.index])
+                    .select('circle')
+                    .attr('fill', 'steelblue');
+            }
+
             d3.select(this.circleNodes.nodes()[node.index])
                 .select('circle')
                 .attr('fill', type == 'start' ? 'red' : 'blue');
+            
+            if (type == 'start') return;
+
+            d3.selectAll('.node')
+                .select('.node-h')
+                .text(d => `h(${this.calculateEuclideanDistance(d, this.$store.nodes.endNode)})`);
         },
         updateLinks() {
             let linkGroup = this.svg.selectAll('.link-group')
@@ -199,11 +217,30 @@ document.addEventListener('alpine:init', () => {
             this.linkLabels
                 .attr("x", d => (d.source.fx + d.target.fx) / 2)
                 .attr("y", d => (d.source.fy + d.target.fy) / 2)
+                .text(d => this.calculateEuclideanDistance(d.source, d.target));
+            
+            d3.selectAll('.node')
+                .select('.node-h')
                 .text(d => {
-                    const dx = d.target.fx - d.source.fx;
-                    const dy = d.target.fy - d.source.fy;
-                    return Math.sqrt(dx * dx + dy * dy).toFixed(1);
+                    if (this.$store.nodes.endNode) {
+                        return `h(${this.calculateEuclideanDistance(d, this.$store.nodes.endNode)})`;
+                    } else {
+                        return 'h(-)';
+                    }
                 });
+        },
+        calculateEuclideanDistance(startNode, endNode) {
+            const dx = endNode.fx - startNode.x;
+            const dy = endNode.y - startNode.y;
+
+            const result = Math.sqrt(dx ** 2 + dy ** 2);
+            return Math.round(result * 100) / 100;
+        },
+        runGreedyBestFirstSearch() {
+            const startNode = this.$store.nodes.startNode;
+            const endNode = this.$store.nodes.endNode;
+
+            console.info('Process started!');
         }
     }));
 
