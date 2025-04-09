@@ -1,6 +1,13 @@
 This project is a visual and interactive demonstration of the Greedy Best First Search (GBFS) algorithm — an informed search algorithm that uses a heuristic to guide its pathfinding decisions. It's designed to help users understand how GBFS works through an intuitive, hands-on experience.
 
 # How to use it ? 🪇
+
+
+
+https://github.com/user-attachments/assets/53089cbd-77d7-47c5-a4d1-f7de955ec977
+
+
+
 Running the demonstration is simple. Just follow these steps:
 
 1. Open the Website
