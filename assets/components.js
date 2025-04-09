@@ -206,11 +206,16 @@ document.addEventListener('alpine:init', () => {
                 .attr("y1", d => d.source.fy)
                 .attr("x2", d => d.target.fx)
                 .attr("y2", d => d.target.fy);
+            
+            
+            this.$store.links.linksData.forEach(link => {
+                link.length = this.calculateEuclideanDistance(link.source, link.target);
+            });
 
             this.linkLabels
                 .attr("x", d => (d.source.fx + d.target.fx) / 2)
                 .attr("y", d => (d.source.fy + d.target.fy) / 2)
-                .text(d => this.calculateEuclideanDistance(d.source, d.target));
+                .text(d => d.length);
             
             if (this.$store.nodes.endNode) {
                 this.$store.nodes.nodesData.forEach(node => {
@@ -238,6 +243,7 @@ document.addEventListener('alpine:init', () => {
             let childrenLinks = this.$store.links.linksData.filter(item => item.source == this.$store.nodes.startNode || item.target == this.$store.nodes.startNode);
 
             queue.push(this.$store.nodes.startNode);
+            this.$store.links.addPath(this.$store.nodes.startNode.name);
 
             do {
                 for (const link of childrenLinks) {
@@ -246,7 +252,7 @@ document.addEventListener('alpine:init', () => {
                     }
 
                     if (link.target.h < smallestHeuristic.target.h) {
-                        if (smallestHeuristic.target.index != null) {
+                        if (smallestHeuristic.target.index != null && smallestHeuristic != queue.at(-1)) {
                             d3.select(this.circleNodes.nodes()[smallestHeuristic.target.index])
                                 .select('circle')
                                 .attr('fill', 'gray');
@@ -263,12 +269,11 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 queue.push(smallestHeuristic);
+                this.$store.links.addPath(smallestHeuristic.target.name);
+                this.$store.links.addCost(smallestHeuristic.length);
 
                 childrenLinks = this.$store.links.linksData.filter(item => queue.at(-1).target == item.source || queue.at(-1).target == item.target);
             } while (queue.at(-1).target.h != 0);
-            smallestHeuristic.target != null;
-            
-            console.info('RESULT: ', queue);
         }
     }));
 

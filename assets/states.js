@@ -24,8 +24,16 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.store('links', {
         linksData: [],
+        paths: [],
+        costs: [],
         addLink(source, target) {
             this.linksData.push({ source: source, target: target});
+        },
+        addPath(node) {
+            this.paths.push(node);
+        },
+        addCost(cost) {
+            this.costs.push(cost);
         }
     });
 });
