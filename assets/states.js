@@ -19,6 +19,11 @@ document.addEventListener('alpine:init', () => {
         },
         updateNodeProperty(index, name) {
             this.nodesData[index].name = name;
+        },
+        resetNodesStates() {
+            this.nodesData = [];
+            this.startNode = null;
+            this.endNode = null;
         }
     });
 
@@ -34,6 +39,11 @@ document.addEventListener('alpine:init', () => {
         },
         addCost(cost) {
             this.costs.push(cost);
+        },
+        resetLinksStates() {
+            this.paths = [];
+            this.costs = [];
+
         }
     });
 });

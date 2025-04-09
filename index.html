@@ -23,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 
-<body class="py-5 px-12 min-h-screen">
+<body>
     <nav class="navbar fixed top-0">
         <h1 class="text-xl font-bold text-center w-full">Greedy Best First Search Demo</h1>
     </nav>
@@ -31,20 +31,17 @@
     <main 
         x-ref="main"
         x-data="mainComponent"
-        class="mt-14 relative p-12 pb-20 h-screen min-h-screen">
+        class="relative p-12 pb-20 h-screen min-h-screen">
         <section class="fixed z-10 top-1/2 -translate-y-1/2 left-5">
             <div
-                x-data="{
-                    isGraphCreated: false,
-                    isFinishRun: false
-                }"
-                class="card card-md border border-black bg-white shadow-md shadow-slate-500 h-[34rem] w-52">
+                x-data="controllerComponent"
+                class="card card-md border border-black bg-white shadow-md shadow-slate-500 h-4/5 w-52">
                 <div class="card-body">
                     <div class="card-title font-bold">Controller</div>
 
                     <hr>
 
-                    <div class="my-4">
+                    <div class="mt-4">
                         <label class="floating-label">
                             <input 
                                 x-init="$store.nodes.updateNode($el.value)"
@@ -60,7 +57,7 @@
                             <span>Total node</span>
                         </label>
 
-                        <div class="overflow-y-auto max-h-64">
+                        <div class="overflow-y-auto h-1/2 max-h-64">
                             <table
                                 class="table table-zebra">
                                 <thead class="sticky top-0 bg-white z-10">
@@ -107,9 +104,17 @@
 
                         <button
                             x-show="isFinishRun"
-                            @click="console.log('Reset button clicked'); isFinishRun = false; isGraphCreated = false"
+                            @click="runGreedyBestFirstSearch(true); isFinishRun = true"
                             type="button"
                             class="btn btn-outline w-full btn-sm">
+                            Re-run
+                        </button>
+
+                        <button
+                            @click="resetData(); resetMainComponent();"
+                            :disabled="!isGraphCreated && !isFinishRun"
+                            type="button"
+                            class="btn btn-neutral w-full btn-sm">
                             Reset
                         </button>
                     </div>
@@ -195,20 +200,20 @@
             id="node-tooltip"
             class="absolute">
             <div
-                class="card card-border card-xs bg-slate-200 shadow-sm z-30">
+                class="card border border-black card-xs bg-white shadow-md shadow-slate-500 z-30">
                 <div class="card-body">
                     <div
                         class="card-actions flex-col">
                         <button 
                             @click="setNode('start')"
                             id="start-btn-node"
-                            class="btn btn-xs btn-primary w-full">
+                            class="btn btn-xs btn-neutral w-full">
                             Set as start node
                         </button>
                         <button 
                             @click="setNode('end')"
                             id="end-btn-node"
-                            class="btn btn-xs btn-secondary w-full">
+                            class="btn btn-xs btn-neutral w-full">
                             Set as end node
                         </button>
                     </div>
