@@ -6,259 +6,223 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Greedy Best First Search Demo</title>
     <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+    
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+    </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 
-<body class="bg-gray-100 py-5 px-12 min-h-screen">
-    <nav class="fixed top-0 py-5 px-2">
-        <h1 class="font-bold text-2xl">Greedy Best First Search Demo</h1>
+<body>
+    <nav class="navbar fixed top-0">
+        <h1 class="text-xl font-bold text-center w-full">Greedy Best First Search Demo</h1>
     </nav>
 
-    <main class="mt-14 relative p-12 pb-20 min-h-screen">
-        <section class="z-10 top-24 left-28 fixed bg-white">
-            <button 
-                type="button"
-                class="bg-black text-white px-4 py-2 w-36 rounded cursor-pointer transition duration-200 ease-in-out transform hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600 active:scale-95">
-                Run
-            </button>
+    <main 
+        x-ref="main"
+        x-data="mainComponent"
+        class="relative p-12 pb-20 h-screen min-h-screen">
+        <section class="fixed z-10 top-1/2 -translate-y-1/2 left-5">
+            <div
+                x-data="controllerComponent"
+                class="card card-md border border-black bg-white shadow-md shadow-slate-500 h-4/5 w-52">
+                <div class="card-body">
+                    <div class="card-title font-bold">Controller</div>
+
+                    <hr>
+
+                    <div class="mt-4">
+                        <label class="floating-label">
+                            <input 
+                                x-init="$store.nodes.updateNode($el.value)"
+                                @input="$store.nodes.updateNode($el.value)"
+                                type="number" 
+                                class="input input-neutral input-sm validator" 
+                                required 
+                                placeholder="Total node" 
+                                min="2" 
+                                value="2"
+                                title="Total node">
+                            <p class="validator-hint text-xs">The minimum of total node is 2</p>
+                            <span>Total node</span>
+                        </label>
+
+                        <div class="overflow-y-auto h-1/2 max-h-64">
+                            <table
+                                class="table table-zebra">
+                                <thead class="sticky top-0 bg-white z-10">
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Node</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(val, index) in $store.nodes.nodesData" :key="index">
+                                        <tr>
+                                            <td x-text="index + 1"></td>
+                                            <td>
+                                                <input 
+                                                    @input="$store.nodes.updateNodeProperty(index, $el.value)"
+                                                    type="text" 
+                                                    class="input input-ghost focus:outline-none focus:border-none focus:ring-0 focus:bg-transparent" 
+                                                    placeholder="Name">
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card-actions justify-center mt-auto">
+                        <button 
+                            @click="createGraph(); isGraphCreated = true"
+                            type="button"
+                            :disabled="isGraphCreated"
+                            class="btn btn-neutral w-full btn-sm">
+                            Create Graph
+                        </button>
+
+                        <button
+                            x-show="!isFinishRun"
+                            @click="runGreedyBestFirstSearch(); isFinishRun = true"
+                            :disabled="!isGraphCreated"
+                            type="button"
+                            class="btn btn-neutral w-full btn-sm">
+                            Run
+                        </button>
+
+                        <button
+                            x-show="isFinishRun"
+                            @click="runGreedyBestFirstSearch(true); isFinishRun = true"
+                            type="button"
+                            class="btn btn-outline w-full btn-sm">
+                            Re-run
+                        </button>
+
+                        <button
+                            @click="resetData(); resetMainComponent();"
+                            :disabled="!isGraphCreated && !isFinishRun"
+                            type="button"
+                            class="btn btn-neutral w-full btn-sm">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
         </section>
-        
-        <div 
-            x-data="{
-                totalNode: 0,
-                lastRow: 1,
-                getArrowAngle(node1, node2) {
-                    const x1 = node1.offsetLeft + node1.offsetWidth / 2;
-                    const y1 = node1.offsetTop + node1.offsetHeight / 2;
-                    const x2 = node2.offsetLeft + node2.offsetWidth / 2;
-                    const y2 = node2.offsetTop + node2.offsetHeight / 2;
 
-                    const dx = x2 - x1;
-                    const dy = y2 - y1;
+        <div class="h-full flex justify-end">
+            <svg id="graph-svg" class="w-4/5 h-full"></svg>
+        </div>
 
-                    // return in degree scale
-                    return Math.atan2(dy, dx) * 180 / Math.PI;
-                },
-                getNodeName(index) {
-                    let column = '';
-                    while (index >= 0) {
-                        column = String.fromCharCode((index % 26) + 65) + column;
-                        index = Math.floor(index / 26) - 1;
-                    }
-                    return column;
-                },
-                createNewNode(indexAtGroup, currentRow, indexGroup, side, parentElement) {
-                    if (currentRow == 4) {
-                        return console.warn('The tree data structure has reach the limit of rows. Can not add new node anymore!');
-                    }
+        <section class="fixed bottom-6 left-1/2 -translate-x-1/2 w-1/2">
+            <div
+                x-data="" 
+                class="card border border-black w-full shadow-md shadow-slate-500">
+                <div class="card-body flex-row p-4">
+                    <div class="w-1/2 flex flex-col justify-center mr-4">
+                        <div class="card-title font-bold text-center block text-sm">Path</div>
+                        <div id="paths-result" class="flex flex-wrap text-lg justify-center">
+                            <template x-if="$store.links.paths.length == 0">
+                                <div class="font-bold text-xl">-</div>
+                            </template>
 
-                    const template = document.getElementById('node-template');
-                    const clonedNodeTemplate = template.content.cloneNode(true);
+                            <template x-if="$store.links.paths.length != 0">
+                                <template x-for="(path, index) in $store.links.paths">
+                                    <div class="flex items-center">
+                                        <div x-text="path" class="mx-2"></div>
+                                        <template x-if="index != $store.links.paths.length - 1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                            </svg>                                          
+                                        </template>
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
+                    </div>
 
-                    clonedNodeTemplate.getElementById('node-name').textContent = this.getNodeName(this.totalNode);
-                    clonedNodeTemplate.querySelector('.node').setAttribute('x-data', `{ 
-                        isHover: false, 
-                        indexAtGroup: ${side == 'left' ? 0 : 1},
-                        haveLeftChild: false,
-                        haveRightChild: false,
-                        timeoutId: null 
-                    }`);
+                    <div class="border-l-2 border-black h-full"></div>
 
-                    const index = indexAtGroup == 0 ? 2 * indexGroup : 2 * indexGroup  + 1;
+                    <div class="w-1/2 flex flex-col justify-center ml-4">
+                        <div class="card-title font-bold text-center block text-sm">Total Cost</div>
+                        <div id="cost-result" class="flex flex-wrap text-lg justify-center">
+                            <template x-if="$store.links.costs.length == 0">
+                                <div class="font-bold text-xl">-</div>
+                            </template>
 
-                    const rows = document.querySelectorAll('.row');
-                    if (rows.length != currentRow) {
-                        const groupNodes = rows[currentRow].querySelectorAll('.group-node');
+                            <template x-if="$store.links.costs.length != 0">
+                                <template x-for="(cost, index) in $store.links.costs">
+                                    <div class="flex items-center">
+                                        <div x-text="cost" class="mx-2"></div>
+                                        <template x-if="index != $store.links.costs.length - 1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                            </svg>
+                                        </template>
 
-                        if (side == 'left') {
-                            groupNodes[index].prepend(clonedNodeTemplate);
-                        } else {
-                            groupNodes[index].appendChild(clonedNodeTemplate);
-                        }
+                                        <template x-if="index == $store.links.costs.length - 1">
+                                            <div class="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.499 8.248h15m-15 7.501h15" />
+                                                </svg>
 
-                        this.totalNode++;
-                    } else {
-                        const newRow = document.createElement('div');
-                        newRow.setAttribute('x-data', `{ currentRow: ${currentRow + 1} }`);
-                        newRow.setAttribute('class', 'row w-full my-20 flex justify-around');
-
-                        const totalGroup = 2 ** (currentRow - 1);
-                        const groupNodes = [];
-                        for (let i = 0; i < totalGroup; i++) {
-                            const newGroupNode = document.createElement('div');
-                            newGroupNode.setAttribute('x-data', `{ indexGroup: ${i}}`);
-                            newGroupNode.setAttribute('class', 'group-node flex justify-around w-full');
-
-                            groupNodes.push(newGroupNode);
-                        }
-                        
-                        groupNodes[index].appendChild(clonedNodeTemplate);
-                        this.totalNode++;
-
-                        groupNodes.forEach(el => newRow.appendChild(el));
-
-                        const arrowCloned = document.getElementById('arrow-template').content.cloneNode(true);
-
-                        const arrows = document.createElement('div');
-                        arrows.classList.add('arrows', 'w-full', 'flex', 'justify-center');
-                        arrows.appendChild(arrowCloned);
-
-                        const starterNodeContainer = document.getElementById('starter-node-container');
-                        starterNodeContainer.append(arrows, newRow);
-                        
-                        const selectedArrows = document.querySelectorAll('.arrows')[currentRow - 1];
-                        const firstArrow = selectedArrows.querySelector('.arrow-group');
-                        
-                        const nodes = starterNodeContainer.querySelectorAll('.node');
-                        const newAppendedNode = nodes[nodes.length - 1];
-                        const angle = this.getArrowAngle(parentElement, newAppendedNode);
-
-                        firstArrow.setAttribute('x-data', `{ 
-                            startPoint: { x: ${parentElement.offsetLeft + parentElement.offsetWidth / 2}, y: ${selectedArrows.offsetTop} }, 
-                            endPoint: { x: ${newAppendedNode.offsetLeft + newAppendedNode.offsetWidth / 2}, y: ${selectedArrows.offsetTop + selectedArrows.offsetHeight} }, 
-                            angle: ${angle}
-                        }`);
-                    }
-                }
-            }"
-            id="node-tree-content" 
-            class="flex flex-col items-center justify-center">
-            <div id="starter-node-container" class="w-full">
-                <div
-                    x-data="{
-                        currentRow: 1,
-                        totalChild: 0
-                    }"
-                    class="row w-full mt-4 mb-20 flex justify-around">
-                    <div
-                        x-data="{
-                            indexGroup: 0
-                        }"
-                        class="group-node flex justify-around">
-                        <div
-                            x-data="{
-                                isHover: false,
-                                indexAtGroup: 0,
-                                haveLeftChild: false,
-                                haveRightChild: false,
-                                timeoutId: null
-                            }"
-                            @mouseenter="isHover = true; clearTimeout(timeoutId)"
-                            @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
-                            class="node relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
-                            <span id="node-name">START</span>
-
-                            <div
-                                x-show="isHover && !haveLeftChild"
-                                x-transition
-                                @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'left', $el.parentElement); haveLeftChild = true;"
-                                class="absolute z-20 -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                                Left
-                            </div>
-
-                            <div
-                                x-show="isHover && !haveRightChild"
-                                x-transition
-                                @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'right', $el.parentElement); haveRightChild = true;"
-                                class="absolute z-20 -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                                Right
-                            </div>
+                                                <div x-text="$store.links.costs.reduce((acc, val) => acc + val, 0)" class="ml-2"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </template>
                         </div>
                     </div>
                 </div>
             </div>
+        </section>
 
-
+        <aside 
+            x-data="tooltipComponent"
+            x-ref="nodeTooltip"
+            x-show="isShow"
+            @mouseenter="clearTimeout(timeoutID); isShow = true;" 
+            @mouseleave="isShow = false"
+            x-transition
+            id="node-tooltip"
+            class="absolute">
             <div
-                x-data="{
-                    angle: 90
-                }"
-                x-show="totalNode == 0"
-                id="arrows-node-container">
-                <div class="relative">
-                    <input 
-                        type="number" 
-                        name="1" 
-                        min="0"
-                        value="0"
-                        class="w-6 h-6 appearance-none bg-transparent text-center absolute top-1/2 -translate-y-1/2 -left-5 focus:outline-none"
-                        style="-moz-appearance: textfield; appearance: textfield;">
-
-                    <svg :class="`rotate-[${angle}deg]`" class="arrow" width="75" height="30" viewBox="0 0 70 30">
-                        <line x1="0" y1="15" x2="60" y2="15" stroke="black" stroke-width="1" />
-                        <polyline points="60,10 70,15 60,20" fill="black" />
-                    </svg>           
-                </div>
-            </div>
-
-
-            <div id="end-node-container" class="w-full flex justify-center mt-20">
-                <div
-                    x-data="{ }"
-                    id="node"
-                    class="relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
-                    <span id="node-name">END</span>
-                </div>
-            </div>
-
-
-
-            <template id="arrow-template">
-                <div
-                    x-data="{
-                        startPoint: { x: 0, y: 0 },
-                        endPoint: { x: 0, y: 0 },
-                        angle: 90
-                    }"
-                    class="arrow-group relative">
-                    <input 
-                        type="number" 
-                        name="1" 
-                        min="0"
-                        value="0"
-                        class="w-6 h-6 appearance-none bg-transparent text-center absolute top-1/2 -translate-y-1/2 -left-5 focus:outline-none"
-                        style="-moz-appearance: textfield; appearance: textfield;">
-
-                    <svg :class="`rotate-[${angle}deg] top-[${startPoint.y}] left-[${startPoint.x}]`" class="arrow" width="75" height="30" viewBox="0 0 70 30">
-                        <line x1="0" y1="15" x2="60" y2="15" stroke="black" stroke-width="1" />
-                        <polyline points="60,10 70,15 60,20" fill="black" />
-                    </svg>   
-                </div>
-            </template>
-
-
-            <template id="node-template">
-                <div
-                    x-data="{ 
-                        isHover: false, 
-                        indexAtGroup: 0,
-                        haveLeftChild: false,
-                        haveRightChild: false,
-                        timeoutId: null 
-                    }"
-                    @mouseenter="isHover = true; clearTimeout(timeoutId)"
-                    @mouseleave="timeoutId = setTimeout(() => isHover = false, 1000)"
-                    class="node relative p-3 border border-b-2 leading-10 border-black w-24 h-24 rounded text-center font-bold shadow-[2px_5px_0px_black] transition duration-200 ease-in-out transform cursor-pointer select-none">
-                    <span id="node-name">A</span>
-
+                class="card border border-black card-xs bg-white shadow-md shadow-slate-500 z-30">
+                <div class="card-body">
                     <div
-                        x-show="isHover && !haveLeftChild"
-                        x-transition
-                        @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'left'); haveLeftChild = true;"
-                        class="absolute z-20 -left-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                        Left
-                    </div>
-                    <div
-                        x-show="isHover && !haveRightChild"
-                        x-transition
-                        @click="createNewNode(indexAtGroup, currentRow, indexGroup, 'right'); haveRightChild = true;"
-                        class="absolute z-20 -right-28 -bottom-32 p-3 border border-b-2 leading-10 text-gray-600 font-bold bg-gray-200 border-gray-600 w-24 h-24 rounded text-center shadow-[2px_5px_0px_#525252] transition duration-200 ease-in-out transform cursor-pointer select-none hover:bg-gray-300 active:shadow-none active:translate-y-[5px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
-                        Right
+                        class="card-actions flex-col">
+                        <button 
+                            @click="setNode('start')"
+                            id="start-btn-node"
+                            class="btn btn-xs btn-neutral w-full">
+                            Set as start node
+                        </button>
+                        <button 
+                            @click="setNode('end')"
+                            id="end-btn-node"
+                            class="btn btn-xs btn-neutral w-full">
+                            Set as end node
+                        </button>
                     </div>
                 </div>
-            </template>
-        </div>
+            </div>
+        </aside>
+
+        <script src="assets/states.js"></script>
+        <script src="assets/components.js"></script>
     </main>
 </body>
 
